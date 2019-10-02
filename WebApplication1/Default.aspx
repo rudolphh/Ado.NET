@@ -1,6 +1,6 @@
 ﻿<%@ Page Title="Home Page" Language="C#" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="WebApplication1._Default" %>
 
-<!DOCTYPE html>
+<html>
 
 <head runat="server">
     <title></title>
@@ -9,8 +9,8 @@
     <form runat="server">
         <div style="font-family: Arial">
 
-            <asp:Button ID="btnGetDataFromDB" runat="server" Text="Get Data from Database" />
-            <asp:GridView ID="gvStudents" runat="server" AutoGenerateColumns="False" DataKeyNames="ID" >
+            <asp:Button ID="btnGetDataFromDB" runat="server" Text="Get Data from Database" OnClick="btnGetDataFromDB_Click" />
+            <asp:GridView ID="gvStudents" runat="server" AutoGenerateColumns="False" DataKeyNames="ID" OnRowCancelingEdit="gvStudents_RowCancelingEdit" OnRowDeleting="gvStudents_RowDeleting" OnRowEditing="gvStudents_RowEditing" OnRowUpdating="gvStudents_RowUpdating" >
                 <Columns>
                     <asp:CommandField ShowDeleteButton="True" ShowEditButton="True" />
                     <asp:BoundField DataField="ID" HeaderText="ID" InsertVisible="False" ReadOnly="True" SortExpression="ID" />
@@ -20,8 +20,8 @@
                 </Columns>
             </asp:GridView>
 
-            <asp:Label ID="lblMessage" runat="server" Text="Label"></asp:Label>
-            <asp:Button ID="btnUpdateDB" runat="server" Text="Button" />
+            <asp:Button ID="btnUpdateDB" runat="server" Text="Update Database Table" OnClick="btnUpdateDB_Click" />
+            <asp:Label ID="lblMessage" runat="server"></asp:Label>
 
         </div>
     </form>

@@ -17,87 +17,112 @@ namespace WebApplication1
         protected void Page_Load(object sender, EventArgs e)
         {
 
-            using (SqlConnection conn = new SqlConnection(connStr))
-            {
-                //SqlCommand cmd = new SqlCommand("Select * from tblProduct", conn);
-                //SqlCommand cmd = new SqlCommand("Select Count(ProductId) from tblProduct", conn);
-                //SqlCommand cmd = new SqlCommand("Insert into tblProduct values ('Calculators', 100, 230)", conn);
-                //SqlCommand cmd = new SqlCommand("update tblProduct set QtyAvailable = 200 where ProductId = 2", conn);
-                //conn.Open();
-
-                //GridView1.DataSource = cmd.ExecuteReader();
-                //GridView1.DataBind();
-
-                //int TotalRows = (int)cmd.ExecuteScalar();
-                //Response.Write("Total Rows = " + TotalRows.ToString());
-
-                //int TotalRowsAffected = cmd.ExecuteNonQuery();
-                //Response.Write("Total Rows Inserted = " + TotalRowsAffected.ToString());
-
-                //int TotalRowsAffected = cmd.ExecuteNonQuery();
-                //Response.Write("Total Rows Updated = " + TotalRowsAffected.ToString());
-
-            } 
         }
 
-        protected void btnGetStudent_Click(object sender, EventArgs e)
+        private void GetDataFromDB()
         {
             SqlConnection conn = new SqlConnection(connStr);
 
-            string sqlQuery = "Select * from tblStudents where ID = " + txtStudentID.Text;
-            SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlQuery, conn);
+            string selectQueryStr = "Select * from tblStudents";
+            SqlDataAdapter dataAdapter = new SqlDataAdapter(selectQueryStr, conn);
 
             DataSet dSet = new DataSet();
             dataAdapter.Fill(dSet, "Students");
 
-            ViewState["SQL_QUERY"] = sqlQuery;
-            ViewState["DATASET"] = dSet;
+            dSet.Tables["Students"].PrimaryKey = new DataColumn[] { dSet.Tables["Students"].Columns["ID"] };
+            Cache.Insert("DATASET", dSet, null, DateTime.Now.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
 
-            if(dSet.Tables["Students"].Rows.Count > 0)
-            {
-                DataRow dataRow = dSet.Tables["Students"].Rows[0];
-                txtStudentName.Text = dataRow["Name"].ToString();
-                txtTotalMarks.Text = dataRow["TotalMarks"].ToString();
-                ddlGender.SelectedValue = dataRow["Gender"].ToString();
+            gvStudents.DataSource = dSet;
+            gvStudents.DataBind();
 
-            }
-            else
-            {
-                lblStatus.ForeColor = System.Drawing.Color.Red;
-                lblStatus.Text = "No student record with ID = " + txtStudentID.Text;
-            }
-
+            lblMessage.Text = "Data loaded from Database.";
         }
 
-        protected void btnUpdate_Click(object sender, EventArgs e)
+        private void GetDataFromCache()
+        {
+            if(Cache["DATASET"] != null)
+            {
+                DataSet dataSet = (DataSet)Cache["DATASET"];
+                gvStudents.DataSource = dataSet;
+                gvStudents.DataBind();
+            }
+        }
+
+        protected void btnGetDataFromDB_Click(object sender, EventArgs e)
+        {
+            GetDataFromDB();
+        }
+
+        protected void gvStudents_RowEditing(object sender, GridViewEditEventArgs e)
+        {
+            gvStudents.EditIndex = e.NewEditIndex;
+            GetDataFromCache();
+        }
+
+        protected void gvStudents_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        {
+            if(Cache["DATASET"] != null)
+            {
+                DataSet ds = (DataSet)Cache["DATASET"];
+                DataRow dr = ds.Tables["Students"].Rows.Find(e.Keys["ID"]);
+                dr["Name"] = e.NewValues["Name"];
+                dr["Gender"] = e.NewValues["Gender"];
+                dr["TotalMarks"] = e.NewValues["TotalMarks"];
+
+                Cache.Insert("DATASET", ds, null, DateTime.Now.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
+                gvStudents.EditIndex = -1;
+                GetDataFromCache();
+            }
+        }
+
+        protected void gvStudents_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+        {
+            gvStudents.EditIndex = -1;
+            GetDataFromCache();
+        }
+
+        protected void gvStudents_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+            if (Cache["DATASET"] != null)
+            {
+                DataSet ds = (DataSet)Cache["DATASET"];
+                DataRow dr = ds.Tables["Students"].Rows.Find(e.Keys["ID"]);
+                dr.Delete();
+
+                Cache.Insert("DATASET", ds, null, DateTime.Now.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
+                GetDataFromCache();
+            }
+        }
+
+        protected void btnUpdateDB_Click(object sender, EventArgs e)
         {
             SqlConnection conn = new SqlConnection(connStr);
-            SqlDataAdapter dataAdapter = new SqlDataAdapter((string)ViewState["SQL_QUERY"], conn);
 
-            SqlCommandBuilder builder = new SqlCommandBuilder(dataAdapter);
+            string selectQueryStr = "Select * from tblStudents";
+            SqlDataAdapter dataAdapter = new SqlDataAdapter(selectQueryStr, conn);
 
-            DataSet dSet = (DataSet)ViewState["DATASET"];
+            DataSet ds = (DataSet)Cache["DATASET"];
 
-            if(dSet.Tables["Students"].Rows.Count > 0)
-            {
-                DataRow dataRow = dSet.Tables["Students"].Rows[0];
-                dataRow["Name"] = txtStudentName.Text;
-                dataRow["Gender"] = ddlGender.SelectedValue;
-                dataRow["TotalMarks"] = txtTotalMarks.Text;
-            } 
+            string strUpdateCommand = "Update tblStudents set Name = @Name, Gender = @Gender, TotalMarks = @TotalMarks where Id = @Id";
+            SqlCommand updateCommand = new SqlCommand(strUpdateCommand, conn);
+            updateCommand.Parameters.Add("@Name", SqlDbType.NVarChar, 50, "Name");
+            updateCommand.Parameters.Add("@Gender", SqlDbType.NVarChar, 20, "Gender");
+            updateCommand.Parameters.Add("@TotalMarks", SqlDbType.Int, 0, "TotalMarks");
+            updateCommand.Parameters.Add("@Id", SqlDbType.Int, 0, "Id");
 
-            int rowsUpdated = dataAdapter.Update(dSet, "Students");
+            dataAdapter.UpdateCommand = updateCommand;
 
-            if (rowsUpdated > 0)
-            {
-                lblStatus.ForeColor = System.Drawing.Color.Green;
-                lblStatus.Text = rowsUpdated + " row updated";
-            }
-            else
-            {
-                lblStatus.ForeColor = System.Drawing.Color.Red;
-                lblStatus.Text = "No row updated";
-            }
+
+            string strDeleteCommand = "Delete from tblStudents where Id = @Id";
+            SqlCommand deleteCommand = new SqlCommand(strDeleteCommand, conn);
+            deleteCommand.Parameters.Add("@Id", SqlDbType.Int, 0, "Id");
+
+            dataAdapter.DeleteCommand = deleteCommand;
+
+
+            dataAdapter.Update(ds, "Students");
+
+            lblMessage.Text = "Database Table Updated.";
         }
     }
     
