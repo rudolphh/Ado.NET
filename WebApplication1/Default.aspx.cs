@@ -128,19 +128,9 @@ namespace WebApplication1
         protected void Button1_Click(object sender, EventArgs e)
         {
             DataSet ds = (DataSet)Cache["DATASET"];
-            if (ds.HasChanges())
-            {
-                ds.RejectChanges();
-                Cache.Insert("DATASET", ds, null, DateTime.Now.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
-                GetDataFromCache();
-                lblMessage.Text = "Changes undone";
-                lblMessage.ForeColor = System.Drawing.Color.Green;
-            }
-            else
-            {
-                lblMessage.Text = "No changes to Undo";
-                lblMessage.ForeColor = System.Drawing.Color.Red;
-            }
+            ds.AcceptChanges();
+            Cache.Insert("DATASET", ds, null, DateTime.Now.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
+
         }
     }
     
