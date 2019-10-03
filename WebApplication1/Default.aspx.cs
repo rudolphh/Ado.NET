@@ -124,6 +124,22 @@ namespace WebApplication1
 
             lblMessage.Text = "Database Table Updated.";
         }
+
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            DataSet ds = (DataSet)Cache["DATASET"];
+            
+            foreach(DataRow dr in ds.Tables["Students"].Rows)
+            {
+                if(dr.RowState == DataRowState.Deleted) { 
+                    Response.Write(dr["ID", DataRowVersion.Original].ToString() + " - " + dr.RowState.ToString() + "<br/>");
+                } 
+                else
+                {
+                    Response.Write(dr["ID", DataRowVersion.Original].ToString() + " - " + dr.RowState.ToString() + "<br/>");
+                }
+            }
+        }
     }
     
 }
