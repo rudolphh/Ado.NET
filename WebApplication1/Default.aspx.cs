@@ -128,22 +128,19 @@ namespace WebApplication1
         protected void Button1_Click(object sender, EventArgs e)
         {
             DataSet ds = (DataSet)Cache["DATASET"];
-            DataRow newDataRow = ds.Tables["Students"].NewRow();
-            newDataRow["ID"] = 101;
-            //ds.Tables["Students"].Rows.Add(newDataRow);
-            
-            foreach(DataRow dr in ds.Tables["Students"].Rows)
+            if (ds.HasChanges())
             {
-                if(dr.RowState == DataRowState.Deleted) { 
-                    Response.Write(dr["ID", DataRowVersion.Original].ToString() + " - " + dr.RowState.ToString() + "<br/>");
-                } 
-                else
-                {
-                    Response.Write(dr["ID"].ToString() + " - " + dr.RowState.ToString() + "<br/>");
-                }
+                ds.RejectChanges();
+                Cache.Insert("DATASET", ds, null, DateTime.Now.AddHours(24), System.Web.Caching.Cache.NoSlidingExpiration);
+                GetDataFromCache();
+                lblMessage.Text = "Changes undone";
+                lblMessage.ForeColor = System.Drawing.Color.Green;
             }
-
-            Response.Write(newDataRow.RowState.ToString());
+            else
+            {
+                lblMessage.Text = "No changes to Undo";
+                lblMessage.ForeColor = System.Drawing.Color.Red;
+            }
         }
     }
     
