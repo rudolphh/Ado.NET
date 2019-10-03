@@ -128,6 +128,9 @@ namespace WebApplication1
         protected void Button1_Click(object sender, EventArgs e)
         {
             DataSet ds = (DataSet)Cache["DATASET"];
+            DataRow newDataRow = ds.Tables["Students"].NewRow();
+            newDataRow["ID"] = 101;
+            //ds.Tables["Students"].Rows.Add(newDataRow);
             
             foreach(DataRow dr in ds.Tables["Students"].Rows)
             {
@@ -136,9 +139,11 @@ namespace WebApplication1
                 } 
                 else
                 {
-                    Response.Write(dr["ID", DataRowVersion.Original].ToString() + " - " + dr.RowState.ToString() + "<br/>");
+                    Response.Write(dr["ID"].ToString() + " - " + dr.RowState.ToString() + "<br/>");
                 }
             }
+
+            Response.Write(newDataRow.RowState.ToString());
         }
     }
     
